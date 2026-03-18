@@ -17,9 +17,12 @@ public class Flight {
 
     public Flight(int flightID,String destination,String airline,double price,int durationMins,int departureHour,int connections,double expUrban,double expNature,double expBeach,double expHistory)
     {
+    //Text Variables
     this.flightID = flightID;
     this.destination = destination;
     this.airline = airline;
+
+    //Dimensions
     this.price = price;
     this.durationMins = durationMins;
     this.departureHour = departureHour;
@@ -33,6 +36,30 @@ public class Flight {
     //Default Constructor
     public Flight() {}
 
+    public double getDimensionValue(int dime)
+    {
+         switch (dime)
+        {
+            case 0:
+                return this.price;
+            case 1:
+                return (double) this.durationMins;
+            case 2:
+                return (double) this.departureHour;
+            case 3:
+                return (double) this.connections;
+            case 4:
+                return this.expUrban;
+            case 5:
+                return this.expNature;
+            case 6:
+                return this.expBeach;
+            case 7:
+                return this.expHistory;
+            default:
+                return 0.0;
+        }
+    }
 
     //ToString
     @Override

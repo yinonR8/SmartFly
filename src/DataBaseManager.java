@@ -4,7 +4,7 @@ import java.util.List;
 
 public class DataBaseManager {
 
-    private String url = "jdbc:sqlserver://localhost:1433;databaseName=SmartFly;integratedSecurity=true;encrypt=true;trustServerCertificate=true;";
+    private final String url = "jdbc:sqlserver://localhost:1433;databaseName=SmartFly;integratedSecurity=true;encrypt=true;trustServerCertificate=true;";
 
     public List<Flight> getAllFlights()
     {
