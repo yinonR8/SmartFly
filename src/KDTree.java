@@ -1,29 +1,55 @@
 import java.util.ArrayList;
+import java.util.List;
 
 public class KDTree {
 
     private static final int k = 8;
     private KDNode root;
 
-    public KDTree(KDNode root)
+    public KDTree()
     {
         this.root = null;
     }
 
-    public KDTree Build(ArrayList<Flight> flights)
+    public void Build(ArrayList<Flight> flights)
     {
         int depth =0;
 
-        if(flights.isEmpty())
-            return null;
-
-        BuildRecursive(flights,depth);
-        return null; //Change
+        if(flights ==null || flights.isEmpty())
+            return;
+        this.root =  BuildRecursive(flights,depth);
     }
 
-    public KDTree BuildRecursive(ArrayList<Flight> flights,int currdepth)
+    public KDNode BuildRecursive(List<Flight> flights, int currdepth)
     {
-        return null; //Change
+        if(flights ==null || flights.isEmpty())
+            return null;
+
+        int dimension = currdepth % k;
+        int median = flights.size()/2;
+        flights.sort((f1,f2) -> Double.compare(f1.getDimensionValue(dimension),f2.getDimensionValue(dimension)));
+        KDNode node = new KDNode(flights.get(median));
+
+        node.setLeft(BuildRecursive(flights.subList(0,median),currdepth + 1));
+        node.setRight(BuildRecursive(flights.subList(median + 1, flights.size()),currdepth + 1));
+
+        return node;
+    }
+
+    private double calculateEuclideanDistance(Flight currflight,double[] user)
+    {
+        double[] sumofgaps = {0,0,0,0,0,0,0,0};
+        double temp=0;
+        double finaldistance = 0;
+        for(int i = 0; i < 8 ; i++)
+        {
+            temp = currflight.getDimensionValue(i) - user[i];
+            sumofgaps[i] = temp;
+            finaldistance += (temp * temp);
+            temp=0;
+        }
+        finaldistance = Math.sqrt(finaldistance);
+        return finaldistance;
     }
 
     public KDNode getRoot() {

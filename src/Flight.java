@@ -1,15 +1,17 @@
 public class Flight {
 
     //Private Variables
+
+    //Text Variables
     private int flightID;
     private String destination;
     private String airline;
+
+    //KD-Tree Dimensions
     private double price;
     private int durationMins;
     private int departureHour;
     private int connections;
-
-    //KD-Tree Dimensions
     private double expUrban;
     private double expNature;
     private double expBeach;
@@ -33,11 +35,14 @@ public class Flight {
     this.expHistory = expHistory;
     }
 
+    enum Dimension{PRICE,DURATION,DEPARTURE,CONNECTIONS,EXPURBAN,EXPNATURE,EXPBEACH,EXPHISTORY}
     //Default Constructor
     public Flight() {}
 
+
     public double getDimensionValue(int dime)
     {
+        //Change to Dictionary Enum
          switch (dime)
         {
             case 0:
