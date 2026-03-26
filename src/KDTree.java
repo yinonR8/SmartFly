@@ -14,7 +14,7 @@ public class KDTree {
     public void Build(ArrayList<Flight> flights)
     {
         int depth =0;
-
+        
         if(flights ==null || flights.isEmpty())
             return;
         this.root =  BuildRecursive(flights,depth);
