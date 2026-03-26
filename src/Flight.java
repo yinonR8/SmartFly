@@ -36,7 +36,11 @@ public class Flight {
     }
 
     //Default Constructor
-    public Flight() {}
+    //Understand that
+    public Flight()
+    {
+    this.Dimensions = new EnumMap<>(FlightDimension.class);
+    }
 
 
     public double getDimensionValue(int axis) {
