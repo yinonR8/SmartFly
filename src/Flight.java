@@ -1,3 +1,5 @@
+import java.util.Map;
+import java.util.EnumMap;
 public class Flight {
 
     //Private Variables
@@ -8,70 +10,46 @@ public class Flight {
     private String airline;
 
     //KD-Tree Dimensions
-    private double price;
-    private int durationMins;
-    private int departureHour;
-    private int connections;
-    private double expUrban;
-    private double expNature;
-    private double expBeach;
-    private double expHistory;
+    private Map<FlightDimension,Double> Dimensions;
+    public Flight(int flightID, String destination, String airline, double price, int durationMins, int departureHour, int connections, double expUrban, double expNature, double expBeach, double expHistory) {
 
-    public Flight(int flightID,String destination,String airline,double price,int durationMins,int departureHour,int connections,double expUrban,double expNature,double expBeach,double expHistory)
+        //Text Variables
+        this.flightID = flightID;
+        this.destination = destination;
+        this.airline = airline;
+
+        //Enum Dictionary
+        this.Dimensions = new EnumMap<>(FlightDimension.class);
+        this.Dimensions.put(FlightDimension.PRICE, price);
+        this.Dimensions.put(FlightDimension.DURATION_MINS, (double) durationMins);
+        this.Dimensions.put(FlightDimension.DEPARTURE_HOUR, (double) departureHour);
+        this.Dimensions.put(FlightDimension.CONNECTIONS, (double) connections);
+        this.Dimensions.put(FlightDimension.EXP_URBAN, expUrban);
+        this.Dimensions.put(FlightDimension.EXP_NATURE, expNature);
+        this.Dimensions.put(FlightDimension.EXP_BEACH, expBeach);
+        this.Dimensions.put(FlightDimension.EXP_HISTORY, expHistory);
+    }
+    //Enum For The FlightDimensions
+    public enum FlightDimension
     {
-    //Text Variables
-    this.flightID = flightID;
-    this.destination = destination;
-    this.airline = airline;
-
-    //Dimensions
-    this.price = price;
-    this.durationMins = durationMins;
-    this.departureHour = departureHour;
-    this.connections = connections;
-    this.expUrban = expUrban;
-    this.expNature = expNature;
-    this.expBeach = expBeach;
-    this.expHistory = expHistory;
+        PRICE,DURATION_MINS,DEPARTURE_HOUR,CONNECTIONS,EXP_URBAN,EXP_NATURE,EXP_BEACH,EXP_HISTORY
     }
 
-    enum Dimension{PRICE,DURATION,DEPARTURE,CONNECTIONS,EXPURBAN,EXPNATURE,EXPBEACH,EXPHISTORY}
     //Default Constructor
     public Flight() {}
 
 
-    public double getDimensionValue(int dime)
-    {
-        //Change to Dictionary Enum
-         switch (dime)
-        {
-            case 0:
-                return this.price;
-            case 1:
-                return (double) this.durationMins;
-            case 2:
-                return (double) this.departureHour;
-            case 3:
-                return (double) this.connections;
-            case 4:
-                return this.expUrban;
-            case 5:
-                return this.expNature;
-            case 6:
-                return this.expBeach;
-            case 7:
-                return this.expHistory;
-            default:
-                return 0.0;
-        }
+    public double getDimensionValue(int axis) {
+        // ממיר את המספר של הציר ל-Enum המתאים (למשל 0 הופך ל-PRICE)
+        FlightDimension dim = FlightDimension.values()[axis];
+        return this.Dimensions.get(dim);
     }
-
     //ToString
     @Override
     public String toString()
     {
         return String.format("Flight #%d: %s To %s | Price %.2f | Stops %d",
-                flightID,airline,destination,price,connections);
+                flightID,airline,destination,getPrice(),getConnections());
     }
 
     //Getters And Setters
@@ -101,66 +79,72 @@ public class Flight {
     }
 
     public double getPrice() {
-        return price;
+        return this.Dimensions.get(FlightDimension.PRICE);
     }
 
     public void setPrice(double price) {
-        this.price = price;
+        this.Dimensions.put(FlightDimension.PRICE,price);
     }
 
-    public int getDurationMins() {
-        return durationMins;
+    public double getDurationMins() {
+        return this.Dimensions.get(FlightDimension.DURATION_MINS);
+
     }
 
     public void setDurationMins(int durationMins) {
-        this.durationMins = durationMins;
+        this.Dimensions.put(FlightDimension.DURATION_MINS,(double)durationMins);
     }
 
-    public int getConnections() {
-        return connections;
+    public double getConnections() {
+        return this.Dimensions.get(FlightDimension.CONNECTIONS);
     }
 
     public void setConnections(int connections) {
-        this.connections = connections;
+        this.Dimensions.put(FlightDimension.CONNECTIONS,(double)connections);
     }
 
-    public int getDepartureHour() {
-        return departureHour;
+    public double getDepartureHour() {
+        return this.Dimensions.get(FlightDimension.DEPARTURE_HOUR);
+
     }
 
     public void setDepartureHour(int departureHour) {
-        this.departureHour = departureHour;
+        this.Dimensions.put(FlightDimension.DEPARTURE_HOUR,(double)departureHour);
     }
 
     public double getExpUrban() {
-        return expUrban;
+        return this.Dimensions.get(FlightDimension.EXP_URBAN);
+
     }
 
     public void setExpUrban(double expUrban) {
-        this.expUrban = expUrban;
+        this.Dimensions.put(FlightDimension.EXP_URBAN,expUrban);
     }
 
     public double getExpNature() {
-        return expNature;
+        return this.Dimensions.get(FlightDimension.EXP_NATURE);
+
     }
 
     public void setExpNature(double expNature) {
-        this.expNature = expNature;
+        this.Dimensions.put(FlightDimension.EXP_NATURE,expNature);
     }
 
     public double getExpBeach() {
-        return expBeach;
+        return this.Dimensions.get(FlightDimension.EXP_BEACH);
+
     }
 
     public void setExpBeach(double expBeach) {
-        this.expBeach = expBeach;
+        this.Dimensions.put(FlightDimension.EXP_BEACH,expBeach);
     }
 
     public double getExpHistory() {
-        return expHistory;
+        return this.Dimensions.get(FlightDimension.EXP_HISTORY );
+
     }
 
     public void setExpHistory(double expHistory) {
-        this.expHistory = expHistory;
+        this.Dimensions.put(FlightDimension.EXP_HISTORY,expHistory);
     }
 }
