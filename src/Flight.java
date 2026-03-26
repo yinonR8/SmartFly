@@ -86,26 +86,24 @@ public class Flight {
         this.Dimensions.put(FlightDimension.PRICE,price);
     }
 
-    public double getDurationMins() {
-        return this.Dimensions.get(FlightDimension.DURATION_MINS);
-
+    public int getDurationMins() {
+        return this.Dimensions.get(FlightDimension.DURATION_MINS).intValue();
     }
 
     public void setDurationMins(int durationMins) {
         this.Dimensions.put(FlightDimension.DURATION_MINS,(double)durationMins);
     }
 
-    public double getConnections() {
-        return this.Dimensions.get(FlightDimension.CONNECTIONS);
+    public int getConnections() {
+        return this.Dimensions.get(FlightDimension.CONNECTIONS).intValue();
     }
 
     public void setConnections(int connections) {
         this.Dimensions.put(FlightDimension.CONNECTIONS,(double)connections);
     }
 
-    public double getDepartureHour() {
-        return this.Dimensions.get(FlightDimension.DEPARTURE_HOUR);
-
+    public int getDepartureHour() {
+        return this.Dimensions.get(FlightDimension.DEPARTURE_HOUR).intValue();
     }
 
     public void setDepartureHour(int departureHour) {
@@ -114,7 +112,6 @@ public class Flight {
 
     public double getExpUrban() {
         return this.Dimensions.get(FlightDimension.EXP_URBAN);
-
     }
 
     public void setExpUrban(double expUrban) {
@@ -123,7 +120,6 @@ public class Flight {
 
     public double getExpNature() {
         return this.Dimensions.get(FlightDimension.EXP_NATURE);
-
     }
 
     public void setExpNature(double expNature) {
@@ -132,7 +128,6 @@ public class Flight {
 
     public double getExpBeach() {
         return this.Dimensions.get(FlightDimension.EXP_BEACH);
-
     }
 
     public void setExpBeach(double expBeach) {
@@ -141,7 +136,6 @@ public class Flight {
 
     public double getExpHistory() {
         return this.Dimensions.get(FlightDimension.EXP_HISTORY );
-
     }
 
     public void setExpHistory(double expHistory) {
