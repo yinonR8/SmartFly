@@ -25,6 +25,7 @@ public class DataBaseManager {
             f.setDurationMins(res.getInt("DurationMins"));
             f.setDepartureHour(res.getInt("DepartureHour"));
             f.setConnections(res.getInt("Connections"));
+            f.setAirLineRating(res.getDouble("AirLineRating"));
 
             f.setExpUrban(res.getDouble("ExpUrban"));
             f.setExpNature(res.getDouble("ExpNature"));
@@ -41,5 +42,42 @@ public class DataBaseManager {
         e.printStackTrace();
         }
         return flightList;
+    }
+    // פונקציית הנרמול המרכזית (Min-Max Scaling)
+    public void normalizeFlights(List<Flight> flights) {
+        if (flights == null || flights.isEmpty()) return;
+
+        double[] mins = new double[9];
+        double[] maxs = new double[9];
+
+        // 1. אתחול המערכים: נשים במינימום מספר ענק ובמקסימום מספר פצפון
+        for (int i = 0; i < 9; i++) {
+            mins[i] = Double.MAX_VALUE;
+            maxs[i] = -Double.MAX_VALUE;
+        }
+
+        // 2. מעבר על כל הטיסות כדי למצוא את המינימום והמקסימום האמיתיים לכל אחד מ-9 הממדים
+        for (Flight f : flights) {
+            for (int i = 0; i < 9; i++) {
+                double val = f.getDimensionValue(i);
+                if (val < mins[i]) mins[i] = val;
+                if (val > maxs[i]) maxs[i] = val;
+            }
+        }
+
+        // עדכון כל הטיסות לערכים המנורמלים (בין 0 ל-1)
+        for (Flight f : flights) {
+            for (int i = 0; i < 9; i++) {
+                double currentVal = f.getDimensionValue(i);
+                double normalizedVal = 0;
+
+                // מוודאים שאין חלוקה באפס (למקרה שכל הטיסות עולות בדיוק אותו דבר)
+                if (maxs[i] - mins[i] != 0) {
+                    normalizedVal = (currentVal - mins[i]) / (maxs[i] - mins[i]);
+                }
+
+                f.setDimensionValue(i, normalizedVal);
+            }
+        }
     }
 }

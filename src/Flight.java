@@ -11,7 +11,7 @@ public class Flight {
 
     //KD-Tree Dimensions
     private Map<FlightDimension,Double> Dimensions;
-    public Flight(int flightID, String destination, String airline, double price, int durationMins, int departureHour, int connections, double expUrban, double expNature, double expBeach, double expHistory) {
+    public Flight(int flightID, String destination, String airline, double price, int durationMins, int departureHour, int connections,double airlinerating, double expUrban, double expNature, double expBeach, double expHistory) {
 
         //Text Variables
         this.flightID = flightID;
@@ -21,18 +21,19 @@ public class Flight {
         //Enum Dictionary
         this.Dimensions = new EnumMap<>(FlightDimension.class);
         this.Dimensions.put(FlightDimension.PRICE, price);
-        this.Dimensions.put(FlightDimension.DURATION_MINS, (double) durationMins);
-        this.Dimensions.put(FlightDimension.DEPARTURE_HOUR, (double) departureHour);
-        this.Dimensions.put(FlightDimension.CONNECTIONS, (double) connections);
-        this.Dimensions.put(FlightDimension.EXP_URBAN, expUrban);
-        this.Dimensions.put(FlightDimension.EXP_NATURE, expNature);
-        this.Dimensions.put(FlightDimension.EXP_BEACH, expBeach);
-        this.Dimensions.put(FlightDimension.EXP_HISTORY, expHistory);
+        this.Dimensions.put(FlightDimension.DURATION_MINS,(double) durationMins);
+        this.Dimensions.put(FlightDimension.DEPARTURE_HOUR,(double) departureHour);
+        this.Dimensions.put(FlightDimension.CONNECTIONS,(double) connections);
+        this.Dimensions.put(FlightDimension.AIRLINE_RATING,airlinerating);
+        this.Dimensions.put(FlightDimension.EXP_URBAN,expUrban);
+        this.Dimensions.put(FlightDimension.EXP_NATURE,expNature);
+        this.Dimensions.put(FlightDimension.EXP_BEACH,expBeach);
+        this.Dimensions.put(FlightDimension.EXP_HISTORY,expHistory);
     }
     //Enum For The FlightDimensions
     public enum FlightDimension
     {
-        PRICE,DURATION_MINS,DEPARTURE_HOUR,CONNECTIONS,EXP_URBAN,EXP_NATURE,EXP_BEACH,EXP_HISTORY
+        PRICE,DURATION_MINS,DEPARTURE_HOUR,CONNECTIONS,AIRLINE_RATING,EXP_URBAN,EXP_NATURE,EXP_BEACH,EXP_HISTORY
     }
 
     //Default Constructor
@@ -48,6 +49,13 @@ public class Flight {
         FlightDimension dim = FlightDimension.values()[axis];
         return this.Dimensions.get(dim);
     }
+
+    // פונקציית עזר להכנסת נתון מנורמל ישירות למילון לפי מספר הציר
+    public void setDimensionValue(int axis, double value) {
+        FlightDimension dim = FlightDimension.values()[axis];
+        this.Dimensions.put(dim, value);
+    }
+
     //ToString
     @Override
     public String toString()
@@ -104,6 +112,13 @@ public class Flight {
 
     public void setConnections(int connections) {
         this.Dimensions.put(FlightDimension.CONNECTIONS,(double)connections);
+    }
+    public double getAirLineRating() {
+        return this.Dimensions.get(FlightDimension.AIRLINE_RATING);
+    }
+
+    public void setAirLineRating(double airlineRating) {
+        this.Dimensions.put(FlightDimension.AIRLINE_RATING,airlineRating);
     }
 
     public int getDepartureHour() {

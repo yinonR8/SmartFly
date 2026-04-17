@@ -3,7 +3,8 @@ import java.util.List;
 
 public class KDTree {
 
-    private static final int k = 8;
+    //Number of Dimensions
+    private static final int k = 9;
     private KDNode root;
 
     public KDTree()
@@ -38,10 +39,10 @@ public class KDTree {
 
     private double calculateEuclideanDistance(Flight currflight,double[] user)
     {
-        double[] sumofgaps = {0,0,0,0,0,0,0,0};
+        double[] sumofgaps = new double[9];
         double temp=0;
         double finaldistance = 0;
-        for(int i = 0; i < 8 ; i++)
+        for(int i = 0; i < 9 ; i++)
         {
             temp = currflight.getDimensionValue(i) - user[i];
             sumofgaps[i] = temp;
