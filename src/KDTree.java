@@ -37,7 +37,7 @@ public class KDTree {
         return node;
     }
 
-    private double calculateEuclideanDistance(Flight currflight,double[] user)
+    public double calculateEuclideanDistance(Flight currflight,double[] user)
     {
         double[] sumofgaps = new double[k];
         double temp=0;
@@ -91,13 +91,30 @@ public class KDTree {
         }
     }
 
-    public Flight[] getRecommendations(double[] user,int numofrecommendations)
-    {
-        MaxHeap heap = new MaxHeap(numofrecommendations);
-        searchNearest(this.root,user,heap,0);
-        return heap.getFlight();
-    }
+    public Flight[] getRecommendations(double[] user, int numOfRecommendations) {
+        MaxHeap heap = new MaxHeap(numOfRecommendations);
+        searchNearest(this.root, user, heap, 0);
 
+        // 1. שולפים את המערך הלא-ממוין מתוך הערימה
+        Flight[] rawFlights = heap.getFlight();
+        int actualSize = heap.getSize();
+
+        // 2. מעתיקים רק את הטיסות האמיתיות (למקרה שהערימה לא התמלאה עד הסוף)
+        Flight[] sortedResults = new Flight[actualSize];
+        for (int i = 0; i < actualSize; i++) {
+            sortedResults[i] = rawFlights[i];
+        }
+
+        // 3. ממיינים מהטיסה הטובה ביותר (מרחק קטן) לגרועה ביותר (מרחק גדול)
+        // סיבוכיות המיון היא O(K log K) ולכן לא פוגעת ביעילות העץ!
+        java.util.Arrays.sort(sortedResults, (f1, f2) -> {
+            double dist1 = calculateEuclideanDistance(f1, user);
+            double dist2 = calculateEuclideanDistance(f2, user);
+            return Double.compare(dist1, dist2);
+        });
+
+        return sortedResults;
+    }
 
     public KDNode getRoot() {
         return root;
