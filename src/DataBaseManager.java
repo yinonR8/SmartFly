@@ -47,18 +47,19 @@ public class DataBaseManager {
     public void normalizeFlights(List<Flight> flights) {
         if (flights == null || flights.isEmpty()) return;
 
-        double[] mins = new double[9];
-        double[] maxs = new double[9];
+        int numDimensions = Flight.FlightDimension.values().length;
 
-        // 1. אתחול המערכים: נשים במינימום מספר ענק ובמקסימום מספר פצפון
-        for (int i = 0; i < 9; i++) {
+        double[] mins = new double[numDimensions];
+        double[] maxs = new double[numDimensions];
+
+        for (int i = 0; i < numDimensions; i++) {
             mins[i] = Double.MAX_VALUE;
             maxs[i] = -Double.MAX_VALUE;
         }
 
-        // 2. מעבר על כל הטיסות כדי למצוא את המינימום והמקסימום האמיתיים לכל אחד מ-9 הממדים
+        //  מעבר על כל הטיסות כדי למצוא את המינימום והמקסימום האמיתיים לכל אחד מ-9 הממדים
         for (Flight f : flights) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < numDimensions; i++) {
                 double val = f.getDimensionValue(i);
                 if (val < mins[i]) mins[i] = val;
                 if (val > maxs[i]) maxs[i] = val;
@@ -67,7 +68,7 @@ public class DataBaseManager {
 
         // עדכון כל הטיסות לערכים המנורמלים (בין 0 ל-1)
         for (Flight f : flights) {
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < numDimensions; i++) {
                 double currentVal = f.getDimensionValue(i);
                 double normalizedVal = 0;
 

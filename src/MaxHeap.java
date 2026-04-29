@@ -84,6 +84,14 @@ public class MaxHeap {
         }
     }
 
+    public boolean isFull() {
+        return size == maxsize;
+    }
+
+    public double getMaxDistance() {
+        if (size == 0) return Double.MAX_VALUE;
+        return distances[0];
+    }
     public Flight[] getFlight()
     {
         return heap;
