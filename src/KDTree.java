@@ -6,6 +6,7 @@ public class KDTree {
     //Number of Dimensions
     private static final int k = Flight.FlightDimension.values().length;
     private KDNode root;
+    private int lastVisitedCount; // משתנה ששומר כמה צמתים בדקנו
 
     public KDTree()
     {
@@ -65,6 +66,7 @@ public class KDTree {
         if (node == null) {
             return;
         }
+        this.lastVisitedCount++; // בדקנו עוד טיסה
         //חישוב מרחק הטיסה הנוכחית והכנסתה לערמה
         double dist = calculateEuclideanDistance(node.getFlight(), target);
         heap.insert(node.getFlight(), dist);
@@ -92,6 +94,7 @@ public class KDTree {
     }
 
     public Flight[] getRecommendations(double[] user, int numOfRecommendations) {
+        this.lastVisitedCount = 0; // איפוס המונה בכל פעם שמתחילים סימולציה חדשה!
         MaxHeap heap = new MaxHeap(numOfRecommendations);
         searchNearest(this.root, user, heap, 0);
 
@@ -122,5 +125,8 @@ public class KDTree {
 
     public void setRoot(KDNode root) {
         this.root = root;
+    }
+    public int getLastVisitedCount() {
+        return this.lastVisitedCount;
     }
 }

@@ -89,12 +89,12 @@ public class Main {
 
             // מפעילים את ה-KNN בעץ ה-KD לחפש את K הטובות ביותר
             Flight[] results = tree.getRecommendations(userPref, k);
+            int visitedNodes = tree.getLastVisitedCount(); // שולפים את כמות הצמתים שנבדקו באמת!
             long endTime = System.currentTimeMillis();
-            long executionTime = Math.max(1, endTime - startTime); // לפחות מילישנייה אחת להדפסה יפה
+            long executionTime = Math.max(1, endTime - startTime);
 
-            // בונים את התשובה בפורמט JSON כדי שהמסך היפה שלנו יבין אותה
-            String jsonResponse = buildJson(userPref, results, executionTime);
-
+            // בונים את התשובה (מעבירים גם את המונה החדש)
+            String jsonResponse = buildJson(userPref, results, executionTime, visitedNodes);
             // שולחים את התשובה למסך
             byte[] responseBytes = jsonResponse.getBytes("UTF-8");
             exchange.sendResponseHeaders(200, responseBytes.length);
@@ -106,11 +106,12 @@ public class Main {
         }
 
         // פונקציה קטנה שלוקחת את האובייקטים והופכת אותם לטקסט (JSON)
-        private String buildJson(double[] userPref, Flight[] results, long time) {
+        private String buildJson(double[] userPref, Flight[] results, long time,int visitedNodes) {
             StringBuilder json = new StringBuilder();
             json.append("{");
             json.append("\"executionTimeMs\":").append(time).append(",");
             json.append("\"totalFlights\":").append(totalFlightsCount).append(",");
+            json.append("\"visitedNodes\":").append(visitedNodes).append(","); // הוספנו את המונה ל-JSON
 
             // וקטור המשתמש
             json.append("\"userVector\":[");
