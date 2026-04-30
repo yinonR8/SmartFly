@@ -29,7 +29,7 @@ public class KDTree {
 
         int dimension = currdepth % k;
         int median = flights.size()/2;
-        flights.sort((f1,f2) -> Double.compare(f1.getDimensionValue(dimension),f2.getDimensionValue(dimension)));
+        quickSort(flights, 0, flights.size() - 1, dimension);
         KDNode node = new KDNode(flights.get(median));
 
         node.setLeft(BuildRecursive(flights.subList(0,median),currdepth + 1));
@@ -117,6 +117,32 @@ public class KDTree {
         });
 
         return sortedResults;
+    }
+    private void quickSort(List<Flight> flights, int low, int high, int dimension) {
+        if (low < high) {
+            int part = partition(flights, low, high, dimension);
+
+            quickSort(flights, low, part - 1, dimension);
+            quickSort(flights, part + 1, high, dimension);
+        }
+    }
+    private int partition(List<Flight> flights, int low, int high, int dimension) {
+        double pivot = flights.get(high).getDimensionValue(dimension);
+        int i = (low - 1);
+
+        for (int j = low; j < high; j++) {
+            if (flights.get(j).getDimensionValue(dimension) < pivot) {
+                i++;
+                Flight temp = flights.get(i);
+                flights.set(i, flights.get(j));
+                flights.set(j, temp);
+            }
+        }
+        Flight temp = flights.get(i + 1);
+        flights.set(i + 1, flights.get(high));
+        flights.set(high, temp);
+
+        return i + 1;
     }
 
     public KDNode getRoot() {
