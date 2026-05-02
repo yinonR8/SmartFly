@@ -10,58 +10,77 @@ import java.util.List;
 
 public class Main {
 
-    // משתנים סטטיים כדי שהשרת יוכל לגשת אליהם תמיד
     private static KDTree tree;
     private static int totalFlightsCount;
 
     public static void main(String[] args) throws IOException {
-        System.out.println("--- Booting SmartFly Server ---");
+        DataBaseManager db = new DataBaseManager();
+        List<Flight> flights = db.getAllFlights();
 
-        // 1. שלב ההכנה (Preprocessing) קורה פעם אחת בלבד כשהשרת עולה!
-        System.out.println("Connecting to Database and loading flights...");
-        DataBaseManager dbManager = new DataBaseManager();
-        List<Flight> allFlights = dbManager.getAllFlights();
-
-        if (allFlights.isEmpty()) {
-            System.out.println("Error: No flights found. Check SQL connection.");
+        if (flights.isEmpty()) {
+            System.out.println("No flights found. Check DB connection.");
             return;
         }
 
-        totalFlightsCount = allFlights.size();
-        System.out.println("Loaded " + totalFlightsCount + " flights. Normalizing...");
-        dbManager.normalizeFlights(allFlights);
+        totalFlightsCount = flights.size();
+        db.normalizeFlights(flights);
 
-        System.out.println("Building KD-Tree...");
         tree = new KDTree();
-        tree.Build(new ArrayList<>(allFlights));
-        System.out.println("KD-Tree built successfully!");
+        tree.Build(new ArrayList<>(flights));
 
-        // 2. הפעלת השרת על פורט 8080
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        // יצירת הנתיב שאליו המסך שלנו יפנה
         server.createContext("/api/simulate", new SimulationHandler());
         server.setExecutor(null);
         server.start();
 
-        System.out.println("\n✅ Server is running successfully on: http://localhost:8080");
-        System.out.println("Waiting for the UI to send requests...");
+        System.out.println("Server running on http://localhost:8080");
     }
 
-    // פונקציית העזר להגרלת המשתמש שלנו
-    public static double[] generateRandomUserPreference() {
-        int numDimensions = Flight.FlightDimension.values().length;
-        double[] randomPref = new double[numDimensions];
-        for (int i = 0; i < numDimensions; i++) {
-            randomPref[i] = Math.round(Math.random() * 100.0) / 100.0;
+    /**
+     * מגריל וקטור העדפות אקראי למשתמש.
+     * כל ערך הוא מספר בין 0 ל-1.
+     */
+    private static double[] randomUserVector() {
+        int dims = Flight.FlightDimension.values().length;
+        double[] vec = new double[dims];
+        for (int i = 0; i < dims; i++) {
+            vec[i] = Math.round(Math.random() * 100.0) / 100.0;
         }
-        return randomPref;
+        return vec;
     }
 
-    // זו המחלקה שמטפלת בבקשות שמגיעות מהמסך (הדפדפן)
+    /**
+     * קורא את ערך K מה-URL של הבקשה.
+     * אם אין ערך תקין, מחזיר 5 כברירת מחדל.
+     */
+    private static int parseK(String query) {
+        int k = 5;
+        if (query != null && query.contains("k=")) {
+            try {
+                k = Integer.parseInt(query.split("k=")[1]);
+            } catch (NumberFormatException e) {
+                k = 5;
+            }
+        }
+        return k;
+    }
+
+    /**
+     * מחשב ציון התאמה באחוזים בין טיסה למשתמש.
+     * מרחק 0 = 100%, ככל שהמרחק גדל האחוז יורד.
+     */
+    private static int calcMatchScore(Flight flight, double[] userVec) {
+        double dist = tree.calculateEuclideanDistance(flight, userVec);
+        return (int) Math.max(0, Math.round(100 - (dist * 30)));
+    }
+
+    // -----------------------------------------------------------
+    // SimulationHandler: מטפל בכל בקשה שמגיעה מהדפדפן
+    // -----------------------------------------------------------
     static class SimulationHandler implements HttpHandler {
+
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            // מאפשר לדפדפן (HTML) לגשת לשרת גם אם הם לא באותה תיקייה (CORS)
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
 
@@ -70,81 +89,73 @@ public class Main {
                 return;
             }
 
-            // מגרילים משתמש חדש
-            double[] userPref = generateRandomUserPreference();
+            int k            = parseK(exchange.getRequestURI().getQuery());
+            double[] userVec = randomUserVector();
+            Flight[] results = tree.getRecommendations(userVec, k);
+            int visited      = tree.getLastVisitedCount();
 
-            // מתחילים למדוד זמן ביצוע מנוע החיפוש!
-            long startTime = System.currentTimeMillis();
-
-            // משיכת הערך K מהבקשה של הדפדפן (ברירת מחדל 5 אם יש שגיאה)
-            int k = 5;
-            String query = exchange.getRequestURI().getQuery();
-            if (query != null && query.contains("k=")) {
-                try {
-                    k = Integer.parseInt(query.split("k=")[1]);
-                } catch (Exception e) {
-                    System.out.println("Invalid K received, using default 5.");
-                }
-            }
-
-            // מפעילים את ה-KNN בעץ ה-KD לחפש את K הטובות ביותר
-            Flight[] results = tree.getRecommendations(userPref, k);
-            int visitedNodes = tree.getLastVisitedCount(); // שולפים את כמות הצמתים שנבדקו באמת!
-            long endTime = System.currentTimeMillis();
-            long executionTime = Math.max(1, endTime - startTime);
-
-            // בונים את התשובה (מעבירים גם את המונה החדש)
-            String jsonResponse = buildJson(userPref, results, executionTime, visitedNodes);
-            // שולחים את התשובה למסך
-            byte[] responseBytes = jsonResponse.getBytes("UTF-8");
-            exchange.sendResponseHeaders(200, responseBytes.length);
+            String json  = buildJson(userVec, results, visited);
+            byte[] bytes = json.getBytes("UTF-8");
+            exchange.sendResponseHeaders(200, bytes.length);
             OutputStream os = exchange.getResponseBody();
-            os.write(responseBytes);
+            os.write(bytes);
             os.close();
-
-            System.out.println("Simulation requested by UI. Search completed in " + executionTime + "ms.");
         }
 
-        // פונקציה קטנה שלוקחת את האובייקטים והופכת אותם לטקסט (JSON)
-        private String buildJson(double[] userPref, Flight[] results, long time,int visitedNodes) {
-            StringBuilder json = new StringBuilder();
-            json.append("{");
-            json.append("\"executionTimeMs\":").append(time).append(",");
-            json.append("\"totalFlights\":").append(totalFlightsCount).append(",");
-            json.append("\"visitedNodes\":").append(visitedNodes).append(","); // הוספנו את המונה ל-JSON
+        /**
+         * בונה את תשובת ה-JSON המלאה הכוללת:
+         * סך הטיסות, כמות הצמתים שנבדקו, וקטור המשתמש, ורשימת הטיסות.
+         */
+        private String buildJson(double[] userVec, Flight[] results, int visited) {
+            String userVectorJson = buildUserVectorJson(userVec);
+            String flightsJson   = buildFlightsJson(results, userVec);
 
-            // וקטור המשתמש
-            json.append("\"userVector\":[");
-            for (int i = 0; i < userPref.length; i++) {
-                json.append(userPref[i]).append(i < userPref.length - 1 ? "," : "");
+            return "{"
+                    + "\"totalFlights\":"  + totalFlightsCount + ","
+                    + "\"visitedNodes\":"  + visited           + ","
+                    + "\"userVector\":"    + userVectorJson    + ","
+                    + "\"flights\":"       + flightsJson
+                    + "}";
+        }
+
+        /**
+         * בונה את ה-JSON של וקטור המשתמש בפורמט מערך.
+         * לדוגמה: [0.12, 0.75, 0.33, ...]
+         */
+        private String buildUserVectorJson(double[] userVec) {
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < userVec.length; i++) {
+                sb.append(userVec[i]);
+                if (i < userVec.length - 1) {
+                    sb.append(",");
+                }
             }
-            json.append("],");
+            sb.append("]");
+            return sb.toString();
+        }
 
-            // הטיסות המנצחות
-            json.append("\"flights\":[");
+        /**
+         * בונה את ה-JSON של רשימת הטיסות המומלצות.
+         * כל טיסה כוללת: חברה, יעד, תיאור וציון התאמה.
+         */
+        private String buildFlightsJson(Flight[] results, double[] userVec) {
+            StringBuilder sb = new StringBuilder("[");
             for (int i = 0; i < results.length; i++) {
-                if (results[i] == null) continue;
-                Flight f = results[i];
+                if (results[i] != null) {
+                    Flight f     = results[i];
+                    int score    = calcMatchScore(f, userVec);
+                    String comma = (i < results.length - 1 && results[i + 1] != null) ? "," : "";
 
-                // --- חישוב האחוז האמיתי! ---
-                // לוקחים את המרחק האוקלידי האמיתי מהעץ
-                double dist = tree.calculateEuclideanDistance(f, userPref);
-                // ממירים לאחוז: מרחק 0 = 100%. ככל שהמרחק גדל, האחוז יורד.
-                // הכפלנו ב-30 כדי לתת משקל הגיוני למרחק בסקאלה של 1 עד 100.
-                int realMatchScore = (int) Math.max(0, Math.round(100 - (dist * 30)));
-
-                json.append("{");
-                json.append("\"id\":").append(f.getFlightID()).append(",");
-                json.append("\"airline\":\"").append(f.getAirline()).append("\",");
-                json.append("\"destination\":\"").append(f.getDestination()).append("\",");
-                json.append("\"description\":\"").append(f.toString()).append("\",");
-                json.append("\"matchScore\":").append(realMatchScore); // הוספנו את הציון ל-JSON
-                json.append("}");
-
-                if (i < results.length - 1 && results[i + 1] != null) json.append(",");
+                    sb.append("{")
+                            .append("\"airline\":\""      ).append(f.getAirline()    ).append("\",")
+                            .append("\"destination\":\"" ).append(f.getDestination()).append("\",")
+                            .append("\"description\":\"" ).append(f.toString()      ).append("\",")
+                            .append("\"matchScore\":"    ).append(score             )
+                            .append("}").append(comma);
+                }
             }
-            json.append("]");
-            json.append("}");
-            return json.toString();
-        }    }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
 }
