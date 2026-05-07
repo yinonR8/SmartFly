@@ -17,10 +17,12 @@ public class MaxHeap {
     {
         return (i-1)/2;
     }
+
     private int leftChild(int i)
     {
         return (2 * i) + 1;
     }
+
     private int rightChild(int i)
     {
         return (2 * i) + 2;
@@ -92,10 +94,12 @@ public class MaxHeap {
         if (size == 0) return Double.MAX_VALUE;
         return distances[0];
     }
+
     public Flight[] getFlight()
     {
         return heap;
     }
+
     public int getSize()
     {
         return size;

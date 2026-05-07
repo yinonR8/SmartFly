@@ -36,10 +36,6 @@ public class Main {
         System.out.println("Server running on http://localhost:8080");
     }
 
-    /**
-     * מגריל וקטור העדפות אקראי למשתמש.
-     * כל ערך הוא מספר בין 0 ל-1.
-     */
     private static double[] randomUserVector() {
         int dims = Flight.FlightDimension.values().length;
         double[] vec = new double[dims];

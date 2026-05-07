@@ -81,4 +81,53 @@ public class DataBaseManager {
             }
         }
     }
+    public void flightRandomCreation(int amount) {
+        String insertSQL = "INSERT INTO Flights (Destination, AirLine, Price, DurationMins, DepartureHour, Connections, AirLineRating, ExpUrban, ExpNature, ExpBeach, ExpHistory) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String[] destinations = {"London", "Paris", "New York", "Tokyo", "Rome", "Berlin", "Madrid", "Dubai", "Bangkok", "Athens"};
+        String[] airlines = {"El Al", "Ryanair", "Wizz Air", "Lufthansa", "Delta", "Emirates", "United", "EasyJet", "Arkia"};
+
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement pstmt = conn.prepareStatement(insertSQL)) {
+
+            // ביטול אוטומציה כדי לאשר את כל הבאצ' ביחד (משפר ביצועים משמעותית!)
+            conn.setAutoCommit(false);
+
+            for (int i = 1; i <= amount; i++) {
+                String dest = destinations[(int)(Math.random() * destinations.length)];
+                String airline = airlines[(int)(Math.random() * airlines.length)];
+                double price = 50 + (Math.random() * 950); // בין 50$ ל-1000$
+                int duration = 60 + (int)(Math.random() * 840); // מ-1 עד 15 שעות
+                int depHour = (int)(Math.random() * 24); // 0 עד 23
+                int connections = (Math.random() > 0.6) ? (int)(Math.random() * 3) + 1 : 0; // 60% סיכוי לטיסה ישירה
+                double rating = 1.0 + (Math.random() * 4.0); // דירוג 1.0 עד 5.0
+
+                pstmt.setString(1, dest);
+                pstmt.setString(2, airline);
+                pstmt.setDouble(3, price);
+                pstmt.setInt(4, duration);
+                pstmt.setInt(5, depHour);
+                pstmt.setInt(6, connections);
+                pstmt.setDouble(7, rating);
+                pstmt.setDouble(8, Math.random() * 10); // ציון אורבני 0-10
+                pstmt.setDouble(9, Math.random() * 10); // ציון טבע 0-10
+                pstmt.setDouble(10, Math.random() * 10); // ציון ים 0-10
+                pstmt.setDouble(11, Math.random() * 10); // ציון היסטוריה 0-10
+
+                pstmt.addBatch(); // הוספת השאילתה לאצווה
+
+                // הרצת האצווה כל 1000 רשומות למניעת עומס על ה-RAM (Flush)
+                if (i % 1000 == 0) {
+                    pstmt.executeBatch();
+                }
+            }
+            pstmt.executeBatch(); // הרצת שארית הרשומות
+            conn.commit(); // שמירה סופית במסד הנתונים
+            System.out.println("Successfully inserted " + amount + " random flights.");
+
+        } catch (SQLException e) {
+            System.out.println("Database Error during random creation");
+            e.printStackTrace();
+        }
+    }
 }

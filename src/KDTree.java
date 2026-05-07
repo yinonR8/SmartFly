@@ -148,7 +148,6 @@ public class KDTree {
     public KDNode getRoot() {
         return root;
     }
-
     public void setRoot(KDNode root) {
         this.root = root;
     }

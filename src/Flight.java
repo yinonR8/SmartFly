@@ -43,7 +43,6 @@ public class Flight {
     this.Dimensions = new EnumMap<>(FlightDimension.class);
     }
 
-
     public double getDimensionValue(int axis) {
         // ממיר את המספר של הציר ל-Enum המתאים (למשל 0 הופך ל-PRICE)
         FlightDimension dim = FlightDimension.values()[axis];
@@ -61,7 +60,7 @@ public class Flight {
     public String toString()
     {
         return String.format("Flight #%d: %s To %s | Price %.2f | Stops %d",
-                flightID,airline,destination,getPrice(),getConnections());
+                flightID,airline,destination,getPrice(),getConnections()); //add rating
     }
 
     //Getters And Setters
