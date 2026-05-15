@@ -29,6 +29,7 @@ public class KDTree {
 
         int dimension = currdepth % k;
         int median = flights.size()/2;
+        // מיון הטיסות לפי הממד הנוכחי כדי שהחציון באמת יהיה באמצע
         quickSort(flights, 0, flights.size() - 1, dimension);
         KDNode node = new KDNode(flights.get(median));
 
@@ -37,7 +38,7 @@ public class KDTree {
 
         return node;
     }
-
+    // חישוב המרחק הגיאומטרי (אוקלידי) בין הטיסה למשתמש, עם "מנגנון קנסות" על חריגות קריטיות.
     public double calculateEuclideanDistance(Flight currflight,double[] user)
     {
         double[] sumofgaps = new double[k];
@@ -118,6 +119,7 @@ public class KDTree {
 
         return sortedResults;
     }
+
     private void quickSort(List<Flight> flights, int low, int high, int dimension) {
         if (low < high) {
             int part = partition(flights, low, high, dimension);
@@ -126,6 +128,7 @@ public class KDTree {
             quickSort(flights, part + 1, high, dimension);
         }
     }
+    // פונקציית העזר של המיון המהיר המפצלת את הרשימה סביב איבר ציר (Pivot).
     private int partition(List<Flight> flights, int low, int high, int dimension) {
         double pivot = flights.get(high).getDimensionValue(dimension);
         int i = (low - 1);

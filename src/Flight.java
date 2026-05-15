@@ -2,8 +2,6 @@ import java.util.Map;
 import java.util.EnumMap;
 public class Flight {
 
-    //Private Variables
-
     //Text Variables
     private int flightID;
     private String destination;
@@ -37,7 +35,6 @@ public class Flight {
     }
 
     //Default Constructor
-    //Understand that
     public Flight()
     {
     this.Dimensions = new EnumMap<>(FlightDimension.class);

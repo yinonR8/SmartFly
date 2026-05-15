@@ -1,41 +1,138 @@
-import com.sun.net.httpserver.HttpServer;
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Main {
+public class Main extends Application {
 
-    static KDTree tree;
-    static DataBaseManager db;
-    static int totalFlightsCount;
+    // ---------- Model (אותה ליבה כמו אצלך) ----------
+    private KDTree tree;
+    private int totalFlightsCount;
 
-    public static void main(String[] args) throws IOException {
-        db = new DataBaseManager();
+    // ---------- View (רכיבי המסך) ----------
+    private Spinner<Integer> kSpinner;          // בחירת מספר המלצות
+    private Label totalLabel;                   // סך הטיסות במסד
+    private Label visitedLabel;                 // כמה צמתים נבדקו
+    private Label efficiencyLabel;              // אחוז גיזום
+    private BarChart<String, Number> userChart; // וקטור המשתמש כגרף
+    private ListView<String> resultsList;       // רשימת ההמלצות
+
+    @Override
+    public void start(Stage stage) {
+        // === שלב 1: טעינת נתונים ובניית עץ (זהה ל-main הישן) ===
+        DataBaseManager db = new DataBaseManager();
         List<Flight> flights = db.getAllFlights();
-
         if (flights.isEmpty()) {
-            System.out.println("No flights found. Check DB connection.");
+            new Alert(Alert.AlertType.ERROR, "אין טיסות במסד הנתונים").showAndWait();
             return;
         }
-
         totalFlightsCount = flights.size();
         db.normalizeFlights(flights);
-
         tree = new KDTree();
         tree.Build(new ArrayList<>(flights));
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        server.createContext("/api/simulate", new SimulationHandler(tree, totalFlightsCount));
-        server.createContext("/api/seed",     new SeedHandler(db));
-        server.setExecutor(null);
-        server.start();
-
-        System.out.println("Server running on http://localhost:8080");
+        // === שלב 2: בניית הממשק ===
+        stage.setTitle("SmartFly - מערכת המלצות טיסות");
+        stage.setScene(new Scene(buildRoot(), 900, 600));
+        stage.show();
     }
 
-    static double[] randomUserVector() {
+    /** בונה את כל מבנה המסך - Top-down כמו במחוון */
+    private BorderPane buildRoot() {
+        BorderPane root = new BorderPane();
+        root.setTop(buildControlPanel());     // למעלה: כפתורים ובחירת K
+        root.setCenter(buildCenter());        // באמצע: גרף + רשימה
+        root.setBottom(buildStatsBar());      // למטה: סטטיסטיקה
+        root.setPadding(new Insets(10));
+        return root;
+    }
+
+    /** סרגל עליון: בחירת K + כפתור סימולציה */
+    private HBox buildControlPanel() {
+        Label kLabel = new Label("מספר המלצות:");
+        kSpinner = new Spinner<>(1, 20, 5);
+
+        Button simulateBtn = new Button("הרץ סימולציה");
+        simulateBtn.setOnAction(e -> runSimulation());
+
+        HBox box = new HBox(10, kLabel, kSpinner, simulateBtn);
+        box.setPadding(new Insets(0, 0, 10, 0));
+        return box;
+    }
+
+    /** מרכז המסך: גרף וקטור משתמש משמאל, רשימת תוצאות מימין */
+    private HBox buildCenter() {
+        // גרף וקטור המשתמש
+        CategoryAxis x = new CategoryAxis();
+        NumberAxis y = new NumberAxis(0, 1, 0.1);
+        userChart = new BarChart<>(x, y);
+        userChart.setTitle("וקטור העדפות המשתמש");
+        userChart.setLegendVisible(false);
+
+        // רשימת ההמלצות
+        resultsList = new ListView<>();
+
+        HBox center = new HBox(10, userChart, resultsList);
+        HBox.setHgrow(userChart, Priority.ALWAYS);
+        HBox.setHgrow(resultsList, Priority.ALWAYS);
+        return center;
+    }
+
+    /** סרגל תחתון: נתונים סטטיסטיים */
+    private HBox buildStatsBar() {
+        totalLabel = new Label("סה\"כ טיסות: " + totalFlightsCount);
+        visitedLabel = new Label("צמתים שנבדקו: -");
+        efficiencyLabel = new Label("יעילות גיזום: -");
+        HBox box = new HBox(30, totalLabel, visitedLabel, efficiencyLabel);
+        box.setPadding(new Insets(10, 0, 0, 0));
+        return box;
+    }
+
+    // ---------- Controller (התגובה ללחיצה) ----------
+    private void runSimulation() {
+        int k = kSpinner.getValue();
+        double[] userVec = randomUserVector();
+        Flight[] results = tree.getRecommendations(userVec, k);
+        int visited = tree.getLastVisitedCount();
+
+        // עדכון גרף וקטור המשתמש
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        String[] names = {"מחיר", "משך", "שעה", "עצירות", "דירוג",
+                "עירוני", "טבע", "חוף", "היסטוריה"};
+        for (int i = 0; i < userVec.length; i++) {
+            series.getData().add(new XYChart.Data<>(names[i], userVec[i]));
+        }
+        userChart.getData().setAll(series);
+
+        // עדכון רשימת ההמלצות
+        ObservableList<String> items = FXCollections.observableArrayList();
+        for (Flight f : results) {
+            if (f != null) {
+                int score = calcMatchScore(f, userVec);
+                items.add(score + "% | " + f.toString());
+            }
+        }
+        resultsList.setItems(items);
+
+        // עדכון סטטיסטיקה
+        double efficiency = 100.0 * (1.0 - (double) visited / totalFlightsCount);
+        visitedLabel.setText("צמתים שנבדקו: " + visited);
+        efficiencyLabel.setText(String.format("יעילות גיזום: %.1f%%", efficiency));
+    }
+
+    // ---------- פונקציות עזר (זהות ל-Main הישן) ----------
+    private double[] randomUserVector() {
         int dims = Flight.FlightDimension.values().length;
         double[] vec = new double[dims];
         for (int i = 0; i < dims; i++) {
@@ -44,39 +141,12 @@ public class Main {
         return vec;
     }
 
-    static synchronized void rebuildTree() {
-        List<Flight> flights = db.getAllFlights();
-        totalFlightsCount = flights.size();
-        db.normalizeFlights(flights);
-        tree = new KDTree();
-        tree.Build(new ArrayList<>(flights));
-        System.out.println("KD-Tree rebuilt with " + totalFlightsCount + " flights.");
-    }
-
-    static int parseParam(String query, String key, int defaultVal) {
-        if (query != null && query.contains(key + "=")) {
-            try {
-                for (String part : query.split("&")) {
-                    if (part.startsWith(key + "=")) {
-                        return Integer.parseInt(part.split("=", 2)[1]);
-                    }
-                }
-            } catch (NumberFormatException e) {
-                // fall through to default
-            }
-        }
-        return defaultVal;
-    }
-
-    static int calcMatchScore(KDTree tree, Flight flight, double[] userVec) {
+    private int calcMatchScore(Flight flight, double[] userVec) {
         double dist = tree.calculateEuclideanDistance(flight, userVec);
         return (int) Math.max(0, Math.round(100 - (dist * 30)));
     }
 
-    static int parseParam(String query, String key, int defaultVal, int min, int max) {
-        int value = parseParam(query, key, defaultVal);
-        if (value < min) return min;
-        if (value > max) return max;
-        return value;
+    public static void main(String[] args) {
+        launch(args);
     }
 }

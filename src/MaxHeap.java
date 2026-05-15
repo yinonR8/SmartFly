@@ -38,7 +38,7 @@ public class MaxHeap {
         distances[i] = distances[j];
         distances[j] = tempdistance;
     }
-
+    // פונקציה זו מעלה איבר כלפי מעלה בערימה כדי לשמור על חוקיות ערימת המקסימום.
     private void bubbleUp(int index)
     {
         while(index > 0 && distances[index] > distances[parent(index)])
@@ -47,7 +47,7 @@ public class MaxHeap {
             index = parent(index);
         }
     }
-
+    // מופעלת בעיקר כאשר מחליפים את השורש (הטיסה הגרועה ביותר) בטיסה חדשה וטובה יותר.
     private void bubbleDown(int index)
     {
         int maxindex = index;
@@ -59,7 +59,7 @@ public class MaxHeap {
 
         if(right < size && distances[right] > distances[maxindex])
             maxindex = right;
-
+// אם גילינו שאחד הבנים מכיל מרחק גדול יותר מההורה
         if(maxindex != index)
         {
             swap(index,maxindex);
@@ -69,6 +69,7 @@ public class MaxHeap {
 
     public void insert(Flight flight,double distance)
     {
+        // מצב 1: יש עדיין מקום פנוי בערימה (טרם אספנו K טיסות)
         if(size < maxsize)
         {
             heap[size] = flight;
@@ -76,6 +77,7 @@ public class MaxHeap {
             bubbleUp(size);
             size++;
         }
+        // מצב 2: הערימה מלאה. עכשיו כל טיסה צריכה "להיאבק" על מקומה.
         else
         {
             if(distance < distances[0]){
