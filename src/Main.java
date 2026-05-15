@@ -2,6 +2,7 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
@@ -21,12 +22,12 @@ public class Main extends Application {
     private int totalFlightsCount;
 
     // ---------- View (רכיבי המסך) ----------
-    private Spinner<Integer> kSpinner;          // בחירת מספר המלצות
-    private Label totalLabel;                   // סך הטיסות במסד
-    private Label visitedLabel;                 // כמה צמתים נבדקו
-    private Label efficiencyLabel;              // אחוז גיזום
-    private BarChart<String, Number> userChart; // וקטור המשתמש כגרף
-    private ListView<String> resultsList;       // רשימת ההמלצות
+    private Spinner<Integer> kSpinner;
+    private Label totalLabel;
+    private Label visitedLabel;
+    private Label efficiencyLabel;
+    private BarChart<String, Number> userChart;
+    private ListView<String> resultsList;
 
     @Override
     public void start(Stage stage) {
@@ -51,14 +52,14 @@ public class Main extends Application {
     /** בונה את כל מבנה המסך - Top-down כמו במחוון */
     private BorderPane buildRoot() {
         BorderPane root = new BorderPane();
-        root.setTop(buildControlPanel());     // למעלה: כפתורים ובחירת K
-        root.setCenter(buildCenter());        // באמצע: גרף + רשימה
-        root.setBottom(buildStatsBar());      // למטה: סטטיסטיקה
+        root.setTop(buildControlPanel());
+        root.setCenter(buildCenter());
+        root.setBottom(buildStatsBar());
         root.setPadding(new Insets(10));
         return root;
     }
 
-    /** סרגל עליון: בחירת K + כפתור סימולציה */
+    /** סרגל עליון: בחירת K + כפתור סימולציה + כפתור פתיחת חלון סטטיסטיקה */
     private HBox buildControlPanel() {
         Label kLabel = new Label("מספר המלצות:");
         kSpinner = new Spinner<>(1, 20, 5);
@@ -66,21 +67,25 @@ public class Main extends Application {
         Button simulateBtn = new Button("הרץ סימולציה");
         simulateBtn.setOnAction(e -> runSimulation());
 
-        HBox box = new HBox(10, kLabel, kSpinner, simulateBtn);
+        // כפתור חדש: פתיחת חלון סטטיסטיקה נפרד
+        Button statsBtn = new Button("סטטיסטיקה");
+        statsBtn.setOnAction(e -> openStatisticsWindow());
+
+        HBox box = new HBox(10, kLabel, kSpinner, simulateBtn, statsBtn);
         box.setPadding(new Insets(0, 0, 10, 0));
+        box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
 
     /** מרכז המסך: גרף וקטור משתמש משמאל, רשימת תוצאות מימין */
     private HBox buildCenter() {
-        // גרף וקטור המשתמש
         CategoryAxis x = new CategoryAxis();
         NumberAxis y = new NumberAxis(0, 1, 0.1);
         userChart = new BarChart<>(x, y);
         userChart.setTitle("וקטור העדפות המשתמש");
         userChart.setLegendVisible(false);
+        userChart.setAnimated(false);
 
-        // רשימת ההמלצות
         resultsList = new ListView<>();
 
         HBox center = new HBox(10, userChart, resultsList);
@@ -99,7 +104,7 @@ public class Main extends Application {
         return box;
     }
 
-    // ---------- Controller (התגובה ללחיצה) ----------
+    // ---------- Controller: סימולציה בודדת ----------
     private void runSimulation() {
         int k = kSpinner.getValue();
         double[] userVec = randomUserVector();
@@ -125,13 +130,19 @@ public class Main extends Application {
         }
         resultsList.setItems(items);
 
-        // עדכון סטטיסטיקה
+        // עדכון סטטיסטיקה תחתונה
         double efficiency = 100.0 * (1.0 - (double) visited / totalFlightsCount);
         visitedLabel.setText("צמתים שנבדקו: " + visited);
         efficiencyLabel.setText(String.format("יעילות גיזום: %.1f%%", efficiency));
     }
 
-    // ---------- פונקציות עזר (זהות ל-Main הישן) ----------
+    /** פתיחת חלון סטטיסטיקה נפרד */
+    private void openStatisticsWindow() {
+        StatisticsWindow statsWindow = new StatisticsWindow(tree, totalFlightsCount, kSpinner.getValue());
+        statsWindow.show();
+    }
+
+    // ---------- פונקציות עזר ----------
     private double[] randomUserVector() {
         int dims = Flight.FlightDimension.values().length;
         double[] vec = new double[dims];
